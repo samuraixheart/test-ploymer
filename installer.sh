@@ -17,6 +17,10 @@ sudo_interactive() {
 # Function to clone repository interactively
 clone_repository() {
     read -p "Enter the repository URL: " repo_url
+    if [ -z "$repo_url" ]; then
+        echo "Repository URL is required. Aborting script."
+        exit 1
+    fi
     git clone "$repo_url" && cd "$(basename "$repo_url" .git)"
 }
 
