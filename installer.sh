@@ -14,16 +14,6 @@ sudo_interactive() {
     fi
 }
 
-# Function to clone repository interactively
-clone_repository() {
-    read -p "Enter the repository URL: " repo_url
-    if [ -z "$repo_url" ]; then
-        echo "Repository URL is required. Aborting script."
-        exit 1
-    fi
-    git clone "$repo_url" && cd "$(basename "$repo_url" .git)"
-}
-
 # Function to append new variables to .env file without changing existing ones
 append_to_env() {
     local env_file="$1"
@@ -57,11 +47,32 @@ if [ -z "$skip_node_installation" ]; then
     sudo_interactive apt update && sudo_interactive apt install -y nodejs
 fi
 
+# Function to clone repository interactively
+clone_repository() {
+    local repo_url=$1
+    if [ -z "$repo_url" ]; then
+        if [ -t 0 ]; then
+            # Interactive mode, prompt for repository URL
+            read -p "Enter the repository URL: " repo_url
+            if [ -z "$repo_url" ]; then
+                echo "Repository URL is required. Aborting script."
+                exit 1
+            fi
+        else
+            # Non-interactive mode, exit
+            echo "Repository URL is required. Aborting script."
+            exit 1
+        fi
+    fi
+    git clone "$repo_url" && cd "$(basename "$repo_url" .git)"
+}
+
 # 1. Clone the repository interactively
 echo "Step 1: Cloning the repository"
-clone_repository
+clone_repository "$1"
 
 # Remaining steps...
+
 
 # 2. Update apt repositories
 echo "Step 2: Updating apt repositories"
