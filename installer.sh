@@ -14,21 +14,16 @@ sudo_interactive() {
     fi
 }
 
-# Function to append new variables to .env file without changing existing ones
-append_to_env() {
+# Function to prompt the user for input and append new variables to .env file
+prompt_and_append_to_env() {
     local env_file="$1"
     shift
-    # Read existing variables from .env file
-    local existing_variables
-    existing_variables=$(grep -vE '^\s*#' "$env_file")
 
-    # Append new variables to .env file
-    cat <<EOF >> "$env_file"
-$@
-EOF
-
-    # Append existing variables back to .env file
-    echo "$existing_variables" >> "$env_file"
+    # Prompt the user to input values for each variable
+    for var in "$@"; do
+        read -p "Enter the value for $var: " value
+        append_to_env "$env_file" "$var='$value'"
+    done
 }
 
 # Check if Node.js is already installed and its version is 20.xx.xx or greater
@@ -93,9 +88,8 @@ foundryup
 
 # 6. Add prebuilt-mpr archive key and repository
 echo "Step 6: Adding prebuilt-mpr archive key and repository"
-sudo_interactive wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | sudo tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null
-echo "deb [arch=all,\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr \$(lsb_release -cs)" | sudo tee /etc/apt/sources.list.d/prebuilt-mpr.list
-
+sudo_interactive wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | sudo tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg > /dev/null
+echo "deb [arch=all,\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr \$(lsb_release -cs)" | sudo tee /etc/apt/sources.list.d/prebuilt-mpr.list > /dev/null
 # 7. Update apt repositories and install just
 echo "Step 7: Updating apt repositories and installing just"
 sudo_interactive apt update && sudo_interactive apt install just
@@ -108,14 +102,14 @@ just install
 echo "Step 9: Copying .env.example to .env"
 cp .env.example .env
 
-# 10. Append new variables to .env file without changing existing ones
-echo "Step 10: Adding new variables to .env file"
-append_to_env .env \
-    PRIVATE_KEY_1='yourkey' \
-    OP_ALCHEMY_API_KEY='yourkey' \
-    BASE_ALCHEMY_API_KEY='yourkey' \
-    OP_BLOCKSCOUT_API_KEY='yourkey' \
-    BASE_BLOCKSCOUT_API_KEY='yourkey'
+# 11. Prompt the user to input values for new variables and append them to .env file
+echo "Step 11: Adding new variables to .env file"
+prompt_and_append_to_env .env \
+    PRIVATE_KEY_1 \
+    OP_ALCHEMY_API_KEY \
+    BASE_ALCHEMY_API_KEY \
+    OP_BLOCKSCOUT_API_KEY \
+    BASE_BLOCKSCOUT_API_KEY
 
 # 11. Run "just do-it" command
 echo "Step 11: Running 'just do-it' command"
