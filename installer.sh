@@ -47,15 +47,60 @@ if [[ "$node_version" =~ ^v([0-9]+)\. ]]; then
     fi
 fi
 
+# Install Node.js if not already installed and skip if version is 20.xx.xx or greater
+if [ -z "$skip_node_installation" ]; then
+    echo "Installing Node.js"
+    sudo_interactive apt update && sudo_interactive apt install -y nodejs
+fi
+
 # 1. Clone the repository interactively
 echo "Step 1: Cloning the repository"
 clone_repository
 
-# 2. Install Node.js if not already installed
-if [ -z "$skip_node_installation" ]; then
-    echo "Step 2: Installing Node.js"
-    sudo_interactive apt update && sudo_interactive apt install -y nodejs
-fi
-
 # Remaining steps...
 
+# 2. Update apt repositories
+echo "Step 2: Updating apt repositories"
+sudo_interactive apt update
+
+# 3. Install Foundry using curl
+echo "Step 3: Installing Foundry"
+sudo_interactive curl -L https://foundry.paradigm.xyz | bash
+
+# 4. Reload bashrc
+echo "Step 4: Reloading bashrc"
+source ~/.bashrc
+
+# 5. Run foundryup command
+echo "Step 5: Running foundryup command"
+foundryup
+
+# 6. Add prebuilt-mpr archive key and repository
+echo "Step 6: Adding prebuilt-mpr archive key and repository"
+sudo_interactive wget -qO - 'https://proget.makedeb.org/debian-feeds/prebuilt-mpr.pub' | gpg --dearmor | sudo tee /usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg 1> /dev/null
+echo "deb [arch=all,\$(dpkg --print-architecture) signed-by=/usr/share/keyrings/prebuilt-mpr-archive-keyring.gpg] https://proget.makedeb.org prebuilt-mpr \$(lsb_release -cs)" | sudo tee /etc/apt/sources.list.d/prebuilt-mpr.list
+
+# 7. Update apt repositories and install just
+echo "Step 7: Updating apt repositories and installing just"
+sudo_interactive apt update && sudo_interactive apt install just
+
+# 8. Install just in the cloned repository directory
+echo "Step 8: Installing just in the cloned repository directory"
+just install
+
+# 9. Copy .env.example to .env
+echo "Step 9: Copying .env.example to .env"
+cp .env.example .env
+
+# 10. Append new variables to .env file without changing existing ones
+echo "Step 10: Adding new variables to .env file"
+append_to_env .env \
+    PRIVATE_KEY_1='yourkey' \
+    OP_ALCHEMY_API_KEY='yourkey' \
+    BASE_ALCHEMY_API_KEY='yourkey' \
+    OP_BLOCKSCOUT_API_KEY='yourkey' \
+    BASE_BLOCKSCOUT_API_KEY='yourkey'
+
+# 11. Run "just do-it" command
+echo "Step 11: Running 'just do-it' command"
+just do-it
