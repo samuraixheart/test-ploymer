@@ -69,17 +69,10 @@ clone_repository() {
 
 # 1. Clone the repository interactively
 echo "Step 1: Cloning the repository"
-# Check if input is coming from a pipe
-if [ -t 0 ]; then
-    # Interactive mode
-    clone_repository "$1"
-else
-    # Non-interactive mode
-    echo "Repository URL is required. Aborting script."
-    exit 1
-fi
+clone_repository "$1"
 
 # Remaining steps...
+
 
 
 # 2. Update apt repositories
